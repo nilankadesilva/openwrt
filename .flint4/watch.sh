@@ -16,6 +16,9 @@ git log --format='- %h %ad %s' --date=short $MB..upstream/main -- target/linux/m
 echo
 echo "### security-flagged subjects anywhere on main since our base"
 git log --format='- %h %ad %s' --date=short -i --grep='CVE' --grep='security' --grep='vuln' $MB..upstream/main | head -20
+# high-exposure packages: a version bump of one of these is alert-worthy on its own (network-facing or crypto)
+WATCHLIST='curl libcurl openssl mbedtls wolfssl dnsmasq hostapd wpad uhttpd wireguard-tools miniupnpd dropbear odhcpd netifd firewall4 bird2 ddns-scripts ctrld'
+for pkg in $WATCHLIST; do git log --format='- %h %ad %s' --date=short $MB..upstream/main -- package/*/*/$pkg package/*/$pkg 2>/dev/null | grep -iE 'update|bump|version|fix' | head -3; done | sort -u | sed 's/$/ [watchlist: core package bump]/'
 echo
 echo "### feeds: commits since $LASTTAG touching packages in our manifest"
 for feed in packages luci routing; do
@@ -24,7 +27,12 @@ for feed in packages luci routing; do
   git -C $d log --format='%h %ad %s' --date=short --since="$TAGDATE" 2>/dev/null | while read h dt s; do pkg=${s%%:*}; echo "$names" | grep -qxF "$pkg" && echo "- [$feed] $h $dt $s"; done
 done | head -40
 echo
+echo "### security-flagged: feed commits to our packages, or watchlist package bumps"
+# re-read the feed section just written and promote the lines that matter into an alert section
+sed -n '/^### feeds:/,/^### security-flagged: feed/p' report.md.tmp 2>/dev/null | grep -E '^- ' | grep -iE "CVE|security|vuln|$(echo $WATCHLIST | sed 's/ /|/g')" | sed 's/$/ [feed]/'
+echo
 echo "### our stack above upstream base ($(git rev-list --count $MB..HEAD) commits)"
 git log --format='- %h %s' $MB..HEAD
-} > report.md
+} > report.md.tmp
+mv report.md.tmp report.md
 echo "report lines: $(wc -l < report.md)"
