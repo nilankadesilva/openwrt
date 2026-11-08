@@ -1,9 +1,9 @@
 apk-mbedtls - 3.0.5-r4
-base-files - 1720~89489ba0a7
+base-files - 1722~7be2a56980
 bird2 - 2.19.3-r1
 bird2c - 2.19.3-r1
 bridger - 2026.09.18~2a2d1261
-busybox - 1.38.0-r4
+busybox - 1.38.0-r5
 ca-bundle - 20260816-r2
 cgi-io - 2026.07.21~31cb3c89-r1
 conntrack - 1.4.8-r1
@@ -25,7 +25,7 @@ fwtool - 2025.10.03~04cd252e-r1
 getrandom - 2025.10.30~6f78fa49-r1
 hostapd-common - 2026.08.07~831364bf-r6
 hostapd-utils - 2026.08.07~831364bf-r6
-input-support - 2
+input-support - 3
 ip-bridge - 7.3.0-r1
 ip-full - 7.3.0-r1
 iw - 6.17-r1
@@ -251,12 +251,12 @@ ucode-mod-rtnl - 2026.10.28~dfc64d41-r1
 ucode-mod-ubus - 2026.10.28~dfc64d41-r1
 ucode-mod-uci - 2026.10.28~dfc64d41-r1
 ucode-mod-uloop - 2026.10.28~dfc64d41-r1
-uhttpd - 2026.10.19~ca796d7d-r1
-uhttpd-mod-ubus - 2026.10.19~ca796d7d-r1
+uhttpd - 2026.11.05~93b05e0b-r1
+uhttpd-mod-ubus - 2026.11.05~93b05e0b-r1
 urandom-seed - 3
 urngd - 2025.10.03~f17e33d9-r1
 usign - 2025.10.03~c4c72b1b-r1
-video-support - 2
+video-support - 3
 vxlan - 7
 wifi-scripts - 1.0-r4
 wireguard-tools - 1.0.20260223-r2
