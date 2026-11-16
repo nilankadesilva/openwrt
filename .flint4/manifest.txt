@@ -1,5 +1,5 @@
 apk-mbedtls - 3.0.5-r4
-base-files - 1723~f9b570edf7
+base-files - 1723~00cac62a82
 bird2 - 2.19.3-r1
 bird2c - 2.19.3-r1
 bridger - 2026.09.18~2a2d1261
@@ -140,7 +140,6 @@ kmod-usb3 - 6.18.60-r1
 kmod-veth - 6.18.60-r1
 kmod-vxlan - 6.18.60-r1
 kmod-wireguard - 6.18.60-r1
-lcdd - 0.1-r2
 libblkid1 - 2.42.2-r1
 libblobmsg-json20261103 - 2026.11.03~a396f38a-r1
 libbpf1 - 1.8.0-r1
@@ -193,13 +192,13 @@ luci-app-firewall - 26.257.65361~d19bf13
 luci-app-package-manager - 26.257.65361~d19bf13
 luci-app-sqm - 26.257.65361~d19bf13
 luci-app-upnp - 26.257.65361~d19bf13
-luci-base - 26.315.60236~bc406ea
+luci-base - 26.320.48369~c8e86e4
 luci-lib-uqr - 26.257.65361~d19bf13
 luci-light - 26.257.65361~d19bf13
 luci-mod-admin-full - 26.257.65361~d19bf13
-luci-mod-network - 26.315.63089~042f322
+luci-mod-network - 26.320.49314~6506ac4
 luci-mod-status - 26.257.65361~d19bf13
-luci-mod-system - 26.257.65361~d19bf13
+luci-mod-system - 26.320.48419~41e24e0
 luci-proto-ipv6 - 26.257.65361~d19bf13
 luci-proto-ppp - 26.257.65361~d19bf13
 luci-proto-vxlan - 26.257.65361~d19bf13
@@ -227,7 +226,7 @@ resolveip - 2
 rpcd - 2026.10.28~469d7852-r1
 rpcd-mod-file - 2026.10.28~469d7852-r1
 rpcd-mod-iwinfo - 2026.10.28~469d7852-r1
-rpcd-mod-luci - 20240305-r1
+rpcd-mod-luci - 20261111-r1
 rpcd-mod-rrdns - 20170710
 rpcd-mod-ucode - 2026.10.28~469d7852-r1
 rtl8261c-firmware - 20261019-r1
