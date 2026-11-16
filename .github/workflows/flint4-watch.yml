@@ -57,14 +57,17 @@ jobs:
           reason=""; body=""
           if [ -n "$sec" ]; then reason="security"; body=$(printf '@%s security-flagged upstream commits since image %s (%s days old):\n\n%s\n\nRun: %s/%s/actions/runs/%s' "$GITHUB_REPOSITORY_OWNER" "$LASTTAG" "$age_days" "$sec" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
           elif [ -n "$routine" ] && [ "$age_days" -ge "$STALE_DAYS" ]; then reason="stale"; body=$(printf '@%s image %s is %s days old and upstream changed things we ship since then; a routine rebuild is due:\n\n%s\n\nRun: %s/%s/actions/runs/%s' "$GITHUB_REPOSITORY_OWNER" "$LASTTAG" "$age_days" "$(echo "$routine" | head -25)" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"); fi
-          A=$(gh api "repos/$GITHUB_REPOSITORY/issues?labels=flint4-security&state=open&per_page=1" --jq '.[0].number // empty')
+          A=""; for l in flint4-security flint4-stale; do [ -n "$A" ] || A=$(gh api "repos/$GITHUB_REPOSITORY/issues?labels=$l&state=open&per_page=1" --jq '.[0].number // empty'); done
           if [ -n "$reason" ]; then
-            title="flint4: rebuild advised ($reason) since image $LASTTAG"
+            title="flint4: rebuild advised ($reason) since image $LASTTAG"; L="flint4-$reason"
+            if [ "$reason" = security ]; then lc=b60205; ld="rebuild advised: security-flagged upstream change"; else lc=fbca04; ld="rebuild advised: image is a week old and upstream moved"; fi
+            gh api "repos/$GITHUB_REPOSITORY/labels/$L" >/dev/null 2>&1 || gh api -X POST "repos/$GITHUB_REPOSITORY/labels" -f name="$L" -f color=$lc -f description="$ld" >/dev/null
             if [ -z "$A" ]; then
-              gh api "repos/$GITHUB_REPOSITORY/labels/flint4-security" >/dev/null 2>&1 || gh api -X POST "repos/$GITHUB_REPOSITORY/labels" -f name=flint4-security -f color=b60205 -f description="rebuild advised (security flag or stale image)" >/dev/null
-              A=$(gh api -X POST "repos/$GITHUB_REPOSITORY/issues" -f title="$title" -f body="$body" -f 'labels[]=flint4-security' --jq .number); echo "opened alert issue #$A ($reason)"
+              A=$(gh api -X POST "repos/$GITHUB_REPOSITORY/issues" -f title="$title" -f body="$body" -f "labels[]=$L" --jq .number); echo "opened alert issue #$A ($reason)"
             else
               gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$A/comments" -f body="$body" >/dev/null; echo "updated alert issue #$A ($reason)"
+              # keep the label and title in step with the current reason (stale can turn into security and back)
+              gh api -X PUT "repos/$GITHUB_REPOSITORY/issues/$A/labels" -f "labels[]=$L" >/dev/null; gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/$A" -f title="$title" >/dev/null
             fi
             echo "::warning::rebuild advised ($reason): image $LASTTAG is $age_days days old"
           elif [ -n "$A" ]; then
