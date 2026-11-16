@@ -24,6 +24,8 @@ jobs:
       - name: fetch upstream main
         run: |
           git remote add upstream https://github.com/openwrt/openwrt.git
+          # image tags are not always on the branch (the stack gets rewritten), so fetch them by name
+          git fetch -q --depth=1 origin "+refs/tags/r*:refs/tags/r*"
           git fetch -q --depth=3000 upstream main
           git merge-base HEAD upstream/main >/dev/null || { git fetch -q --deepen=5000 upstream main; git fetch -q --deepen=2000 origin flint4-main; }
       - name: report
