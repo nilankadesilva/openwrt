@@ -52,11 +52,12 @@ jobs:
           sec=$(awk '/^### security-flagged/{p=1} /^### /&&!/security-flagged/{p=0} p' report.md | grep -E '^- ' || true)
           routine=$(awk '/^### upstream main: commits since our base/{p=1} /^### security-flagged subjects/{p=0} p; /^### feeds:/{q=1} /^### security-flagged: feed/{q=0} q' report.md | grep -E '^- ' || true)
           LASTTAG=$(git tag -l 'r[0-9]*' --sort=-v:refname | head -1)
+          NEXT=$(( ${LASTTAG#r} + 1 ))
           age_days=$(( ( $(date -u +%s) - $(git log -1 --format=%ct "$LASTTAG") ) / 86400 ))
           [ "$TEST" = "true" ] && sec="- 0000000000 $(date -u +%F) TEST: alert path check (ignore)"
           reason=""; body=""
-          if [ -n "$sec" ]; then reason="security"; body=$(printf '@%s security-flagged upstream commits since image %s (%s days old):\n\n%s\n\nRun: %s/%s/actions/runs/%s' "$GITHUB_REPOSITORY_OWNER" "$LASTTAG" "$age_days" "$sec" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
-          elif [ -n "$routine" ] && [ "$age_days" -ge "$STALE_DAYS" ]; then reason="stale"; body=$(printf '@%s image %s is %s days old and upstream changed things we ship since then; a routine rebuild is due:\n\n%s\n\nRun: %s/%s/actions/runs/%s' "$GITHUB_REPOSITORY_OWNER" "$LASTTAG" "$age_days" "$(echo "$routine" | head -25)" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"); fi
+          if [ -n "$sec" ]; then reason="security"; body=$(printf '@%s security-flagged upstream commits since image %s (%s days old):\n\n%s\n\nNext step: prepare r%s here (Run workflow, n = %s): %s/%s/actions/workflows/flint4-prepare.yml\nThis check: %s/%s/actions/runs/%s' "$GITHUB_REPOSITORY_OWNER" "$LASTTAG" "$age_days" "$sec" "$NEXT" "$NEXT" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
+          elif [ -n "$routine" ] && [ "$age_days" -ge "$STALE_DAYS" ]; then reason="stale"; body=$(printf '@%s image %s is %s days old and upstream changed things we ship since then; a routine rebuild is due:\n\n%s\n\nNext step: prepare r%s here (Run workflow, n = %s): %s/%s/actions/workflows/flint4-prepare.yml\nThis check: %s/%s/actions/runs/%s' "$GITHUB_REPOSITORY_OWNER" "$LASTTAG" "$age_days" "$(echo "$routine" | head -25)" "$NEXT" "$NEXT" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"); fi
           A=""; for l in flint4-security flint4-stale; do [ -n "$A" ] || A=$(gh api "repos/$GITHUB_REPOSITORY/issues?labels=$l&state=open&per_page=1" --jq '.[0].number // empty'); done
           if [ -n "$reason" ]; then
             title="flint4: rebuild advised ($reason) since image $LASTTAG"; L="flint4-$reason"
