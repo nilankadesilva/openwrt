@@ -1,5 +1,5 @@
 apk-mbedtls - 3.0.5-r4
-base-files - 1725~5255ee0bb3
+base-files - 1725~77328462d4
 bird2 - 2.19.3-r1
 bird2c - 2.19.3-r1
 bridger - 2026.09.18~2a2d1261
@@ -7,7 +7,7 @@ busybox - 1.38.0-r5
 ca-bundle - 20260816-r2
 cgi-io - 2026.07.21~31cb3c89-r1
 conntrack - 1.4.8-r1
-curl - 8.23.0-r1
+curl - 8.23.0-r2
 ddns-scripts - 2.8.6-r1
 ddns-scripts-cloudflare - 2.8.6-r1
 ddns-scripts-services - 2.8.6-r1
@@ -146,7 +146,7 @@ libbpf1 - 1.8.0-r1
 libc - 1.2.6-r5
 libcap-ng - 0.8.4-r2
 libcomerr0 - 1.47.4-r1
-libcurl4 - 8.23.0-r1
+libcurl4 - 8.23.0-r2
 libdrm - 2.4.133-r2
 libe2p2 - 1.47.4-r1
 libelf1 - 0.196-r1
@@ -159,7 +159,7 @@ libjson-c5 - 0.19-r3
 libjson-script20261103 - 2026.11.03~a396f38a-r1
 liblucihttp-ucode - 2023.03.15~9b5b683f-r1
 liblucihttp0 - 2023.03.15~9b5b683f-r1
-libmbedtls21 - 3.6.7-r1
+libmbedtls21 - 3.6.8-r1
 libmnl0 - 1.0.5-r2
 libncurses6 - 6.6.20260801-r2
 libnetfilter-conntrack3 - 1.1.1-r1
