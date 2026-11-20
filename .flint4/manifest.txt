@@ -1,5 +1,5 @@
 apk-mbedtls - 3.0.5-r4
-base-files - 1725~c2a9a1a24f
+base-files - 1725~efbb2d3013
 bird2 - 2.19.3-r1
 bird2c - 2.19.3-r1
 bridger - 2026.09.18~2a2d1261
@@ -36,7 +36,7 @@ jsonfilter - 2026.03.16~b9034210-r1
 kernel - 6.18.64~843dc1494691f1bed6a73c835fbaf30b-r1
 kmod-backlight - 6.18.64-r1
 kmod-backlight-pwm - 6.18.64-r1
-kmod-cfg80211 - 6.18.64.7.2-r15
+kmod-cfg80211 - 6.18.64.7.2-r16
 kmod-crypto-aead - 6.18.64-r1
 kmod-crypto-authenc - 6.18.64-r1
 kmod-crypto-ccm - 6.18.64-r1
@@ -92,7 +92,7 @@ kmod-leds-gpio - 6.18.64-r1
 kmod-lib-crc-ccitt - 6.18.64-r1
 kmod-lib-textsearch - 6.18.64-r1
 kmod-libphy - 6.18.64-r1
-kmod-mac80211 - 6.18.64.7.2-r15
+kmod-mac80211 - 6.18.64.7.2-r16
 kmod-mt76-connac - 6.18.64.2026.10.28~0936617d-r2
 kmod-mt76-core - 6.18.64.2026.10.28~0936617d-r2
 kmod-mt7996-233-firmware - 6.18.64.2026.10.28~0936617d-r2
@@ -192,7 +192,7 @@ luci-app-firewall - 26.257.65361~d19bf13
 luci-app-package-manager - 26.257.65361~d19bf13
 luci-app-sqm - 26.257.65361~d19bf13
 luci-app-upnp - 26.257.65361~d19bf13
-luci-base - 26.320.48369~c8e86e4
+luci-base - 26.324.47082~a7b9db4
 luci-lib-uqr - 26.257.65361~d19bf13
 luci-light - 26.257.65361~d19bf13
 luci-mod-admin-full - 26.257.65361~d19bf13
@@ -204,7 +204,7 @@ luci-proto-ppp - 26.257.65361~d19bf13
 luci-proto-vxlan - 26.257.65361~d19bf13
 luci-proto-wireguard - 26.284.22796~1a36248
 luci-ssl - 26.257.65361~d19bf13
-luci-theme-bootstrap - 26.308.28974~59b4e33
+luci-theme-bootstrap - 26.323.62521~848c695
 miniupnpd-nftables - 2.3.11-r1
 mipi-dbi-glinet-gl-be14000 - 2024.10.29~1cbd4013-r6
 mkf2fs - 1.16.0-r4
