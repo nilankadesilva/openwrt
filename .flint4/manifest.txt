@@ -1,5 +1,5 @@
 apk-mbedtls - 3.0.5-r4
-base-files - 1725~efbb2d3013
+base-files - 1725~e88a28afd2
 bird2 - 2.19.3-r1
 bird2c - 2.19.3-r1
 bridger - 2026.09.18~2a2d1261
@@ -159,7 +159,7 @@ libjson-c5 - 0.19-r3
 libjson-script20261103 - 2026.11.03~a396f38a-r1
 liblucihttp-ucode - 2023.03.15~9b5b683f-r1
 liblucihttp0 - 2023.03.15~9b5b683f-r1
-libmbedtls21 - 3.6.8-r1
+libmbedtls21 - 3.6.8-r2
 libmnl0 - 1.0.5-r2
 libncurses6 - 6.6.20260801-r2
 libnetfilter-conntrack3 - 1.1.1-r1
