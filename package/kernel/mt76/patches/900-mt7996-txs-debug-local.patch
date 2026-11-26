@@ -1,0 +1,59 @@
+mt7996: TX-status debug prints (LOCAL, do not upstream)
+
+Ratelimited pr_info lines tagged mt76-txsdbg for: a frame that gets no status because its wcid is not published, a pending status entry reaped after MT_TX_STATUS_SKB_TIMEOUT, every host-requested TXS that arrives (did it match a pending frame, ACK error bit), and TXS in a non-MPDU format. Diagnoses polls never acknowledged on the MLD AP interface (r36, 2026-11-26).
+
+--- a/tx.c
++++ b/tx.c
+@@ -148,6 +148,8 @@
+ 	spin_lock_bh(&dev->status_lock);
+ 
+ 	if (rcu_access_pointer(dev->wcid[wcid->idx]) != wcid) {
++		pr_info_ratelimited("mt76-txsdbg: wcid %d unpublished, no status for fc=%04x\n",
++				    wcid->idx, le16_to_cpu(hdr->frame_control));
+ 		pid = MT_PACKET_ID_NO_ACK;
+ 		goto out;
+ 	}
+@@ -201,6 +203,17 @@
+ 		/* It has been too long since DMA_DONE, time out this packet
+ 		 * and stop waiting for TXS callback.
+ 		 */
++		if (pktid >= 0) {
++			struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
++			struct ieee80211_hdr *hdr = (void *)skb->data;
++
++			pr_info_ratelimited("mt76-txsdbg: txs timeout wcid=%d pid=%d age=%ums %s fc=%04x (lookup pid=%d)\n",
++					    wcid->idx, cb->pktid,
++					    jiffies_to_msecs(jiffies - cb->jiffies),
++					    (info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP) ? "8023" : "80211",
++					    (info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP) ? 0 : le16_to_cpu(hdr->frame_control),
++					    pktid);
++		}
+ 		idr_remove(&wcid->pktid, cb->pktid);
+ 		__mt76_tx_status_skb_done(dev, skb, MT_TX_CB_TXS_FAILED |
+ 						    MT_TX_CB_TXS_DONE, list);
+--- a/mt7996/mac.c
++++ b/mt7996/mac.c
+@@ -1513,6 +1513,10 @@
+ 	/* only report MPDU TXS */
+ 	if (le32_get_bits(txs_data[0], MT_TXS0_TXS_FORMAT) == 0) {
+ 		skb = mt76_tx_status_skb_get(mdev, wcid, pid, &list);
++		if (pid >= MT_PACKET_ID_FIRST)
++			pr_info_ratelimited("mt76-txsdbg: txs wcid=%d pid=%d match=%d ackerr=%d\n",
++					    wcid->idx, pid, !!skb,
++					    !!(txs & MT_TXS0_ACK_ERROR_MASK));
+ 		if (skb) {
+ 			info = IEEE80211_SKB_CB(skb);
+ 			if (!(txs & MT_TXS0_ACK_ERROR_MASK))
+@@ -1526,6 +1530,12 @@
+ 		}
+ 	}
+ 
++	if (pid >= MT_PACKET_ID_FIRST &&
++	    le32_get_bits(txs_data[0], MT_TXS0_TXS_FORMAT) != 0)
++		pr_info_ratelimited("mt76-txsdbg: txs wcid=%d pid=%d format=%u (not MPDU, skipped)\n",
++				    wcid->idx, pid,
++				    (unsigned int)le32_get_bits(txs_data[0], MT_TXS0_TXS_FORMAT));
++
+ 	if ((mtk_wed_device_active(&dev->mt76.mmio.wed) ||
+ 	     mt76_npu_device_active(&dev->mt76)) && wcid->sta) {
+ 		struct ieee80211_sta *sta;
