@@ -1,0 +1,89 @@
+mt7996: TX-status debug prints v2 (LOCAL, do not upstream)
+
+Ratelimited pr_info lines tagged mt76-txsdbg, focused on null-data frames (the hostapd poll): the frame entering mt76_tx, its status registration and resulting pid, a wcid refused as unpublished, a pending status reaped after MT_TX_STATUS_SKB_TIMEOUT, and every host TXS that matched a nullfunc or matched nothing. v1 also printed non-MPDU TXS of the BMC wcids, which ate the ratelimit.
+
+--- a/tx.c
++++ b/tx.c
+@@ -129,6 +129,11 @@
+ 
+ 	memset(cb, 0, sizeof(*cb));
+ 
++	if (!(info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP) &&
++	    ieee80211_is_any_nullfunc(hdr->frame_control))
++		pr_info_ratelimited("mt76-txsdbg: status_add nullfunc wcid=%d flags=%08x\n",
++				    wcid ? wcid->idx : -1, info->flags);
++
+ 	if (!wcid)
+ 		return MT_PACKET_ID_NO_ACK;
+ 
+@@ -148,6 +153,8 @@
+ 	spin_lock_bh(&dev->status_lock);
+ 
+ 	if (rcu_access_pointer(dev->wcid[wcid->idx]) != wcid) {
++		pr_info_ratelimited("mt76-txsdbg: wcid %d unpublished, no status for fc=%04x\n",
++				    wcid->idx, le16_to_cpu(hdr->frame_control));
+ 		pid = MT_PACKET_ID_NO_ACK;
+ 		goto out;
+ 	}
+@@ -168,6 +175,11 @@
+ out:
+ 	spin_unlock_bh(&dev->status_lock);
+ 
++	if (!(info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP) &&
++	    ieee80211_is_any_nullfunc(hdr->frame_control))
++		pr_info_ratelimited("mt76-txsdbg: status_add nullfunc wcid=%d -> pid=%d\n",
++				    wcid->idx, pid);
++
+ 	return pid;
+ }
+ EXPORT_SYMBOL_GPL(mt76_tx_status_skb_add);
+@@ -201,6 +213,17 @@
+ 		/* It has been too long since DMA_DONE, time out this packet
+ 		 * and stop waiting for TXS callback.
+ 		 */
++		if (pktid >= 0) {
++			struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
++			struct ieee80211_hdr *hdr = (void *)skb->data;
++
++			pr_info_ratelimited("mt76-txsdbg: txs timeout wcid=%d pid=%d age=%ums %s fc=%04x (lookup pid=%d)\n",
++					    wcid->idx, cb->pktid,
++					    jiffies_to_msecs(jiffies - cb->jiffies),
++					    (info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP) ? "8023" : "80211",
++					    (info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP) ? 0 : le16_to_cpu(hdr->frame_control),
++					    pktid);
++		}
+ 		idr_remove(&wcid->pktid, cb->pktid);
+ 		__mt76_tx_status_skb_done(dev, skb, MT_TX_CB_TXS_FAILED |
+ 						    MT_TX_CB_TXS_DONE, list);
+@@ -381,6 +404,12 @@
+ 
+ 	info->hw_queue |= FIELD_PREP(MT_TX_HW_QUEUE_PHY, phy->band_idx);
+ 
++	if (!(info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP) &&
++	    ieee80211_is_any_nullfunc(hdr->frame_control))
++		pr_info_ratelimited("mt76-txsdbg: tx nullfunc wcid=%d sta=%d flags=%08x fc=%04x\n",
++				    wcid ? wcid->idx : -1, !!sta, info->flags,
++				    le16_to_cpu(hdr->frame_control));
++
+ 	if ((info->flags & IEEE80211_TX_CTL_TX_OFFCHAN) ||
+ 	    ((info->control.flags & IEEE80211_TX_CTRL_DONT_USE_RATE_MASK) &&
+ 	     ieee80211_is_probe_req(hdr->frame_control)))
+--- a/mt7996/mac.c
++++ b/mt7996/mac.c
+@@ -1513,6 +1513,16 @@
+ 	/* only report MPDU TXS */
+ 	if (le32_get_bits(txs_data[0], MT_TXS0_TXS_FORMAT) == 0) {
+ 		skb = mt76_tx_status_skb_get(mdev, wcid, pid, &list);
++		if (pid >= MT_PACKET_ID_FIRST) {
++			bool nf = false;
++
++			if (skb && !(IEEE80211_SKB_CB(skb)->flags & IEEE80211_TX_CTL_HW_80211_ENCAP))
++				nf = ieee80211_is_any_nullfunc(((struct ieee80211_hdr *)skb->data)->frame_control);
++			if (!skb || nf)
++				pr_info_ratelimited("mt76-txsdbg: txs wcid=%d pid=%d match=%d nullfunc=%d ackerr=%d\n",
++						    wcid->idx, pid, !!skb, nf,
++						    !!(txs & MT_TXS0_ACK_ERROR_MASK));
++		}
+ 		if (skb) {
+ 			info = IEEE80211_SKB_CB(skb);
+ 			if (!(txs & MT_TXS0_ACK_ERROR_MASK))
