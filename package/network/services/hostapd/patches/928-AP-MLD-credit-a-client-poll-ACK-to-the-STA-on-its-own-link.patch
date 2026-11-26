@@ -1,0 +1,42 @@
+From: Nilanka de Silva <nilankadsilva@gmail.com>
+Subject: [PATCH] AP MLD: credit a client poll ACK to the STA on its own link
+
+The driver reports the ACK of a client poll (NL80211_CMD_PROBE_CLIENT)
+on the BSS that owns the driver context, which for an AP MLD is the
+first affiliated AP. hostapd_client_poll_ok() looks the STA up on that
+BSS and on the other BSSes of the same interface only, so the ACK of a
+STA associated with another affiliated AP is dropped: the inactivity
+poll of that STA never counts as answered and ap_handle_timer()
+disassociates it after the next timeout although it is present and
+reachable. hostapd_event_sta_low_ack() already resolves the STA across
+the affiliated APs; do the same for the poll ACK.
+
+Observed on mt7996 (OpenWrt, hostapd 2026-08-07) with non-MLO clients on
+the second link of a two-link AP MLD: the kernel reports every poll as
+acknowledged (driver TX status ACK), hostapd never logs AP-STA-POLL-OK
+for them, and idle clients on that link are dropped for inactivity.
+Clients on the first link are credited normally.
+
+Signed-off-by: Nilanka de Silva <nilankadsilva@gmail.com>
+---
+--- a/src/ap/drv_callbacks.c
++++ b/src/ap/drv_callbacks.c
+@@ -2819,6 +2819,18 @@
+ 					data->eapol_tx_status.link_id);
+ 		break;
+ 	case EVENT_DRIVER_CLIENT_POLL_OK:
++#ifdef CONFIG_IEEE80211BE
++		if (hapd->conf->mld_ap &&
++		    !ap_get_sta(hapd, data->client_poll.addr)) {
++			struct hostapd_data *p_hapd;
++
++			p_hapd = hostapd_find_by_sta(hapd->iface,
++						     data->client_poll.addr,
++						     false, NULL);
++			if (p_hapd)
++				hapd = p_hapd;
++		}
++#endif /* CONFIG_IEEE80211BE */
+ 		hostapd_client_poll_ok(hapd, data->client_poll.addr);
+ 		break;
+ 	case EVENT_RX_FROM_UNKNOWN:
