@@ -1,0 +1,75 @@
+From: Nilanka de Silva <nilankadsilva@gmail.com>
+Subject: [PATCH] nl80211: deliver the client poll result to the BSS it was
+ sent on, and resolve the STA across an AP MLD
+
+nl80211_client_probe_event() reports EVENT_DRIVER_CLIENT_POLL_OK to
+drv->ctx, the context of the first BSS of the driver instance. When
+several BSSes of one wiphy share the driver instance but belong to
+different hostapd interfaces, as on an AP MLD whose links are set up
+next to a legacy BSS on the same phy, the event reaches a hostapd_data
+that never had the STA, hostapd_client_poll_ok() searches only that
+interface, and the poll of a present STA counts as unanswered:
+ap_handle_timer() disassociates it for inactivity on the next timeout.
+The CQM low-ack event in the same file already uses bss->ctx.
+
+Hand the event to the BSS the kernel named (the ifindex of the event),
+and in hostapd resolve a STA that is not on that BSS across the
+affiliated APs of the MLD, as hostapd_event_sta_low_ack() does.
+
+Observed on mt7996 with OpenWrt (hostapd 2026-08-07): the kernel reports
+every poll to an awake STA as acknowledged, the event lands on the
+2.4 GHz BSS context, and idle clients of the 6 GHz link are dropped for
+inactivity while present and reachable.
+
+Signed-off-by: Nilanka de Silva <nilankadsilva@gmail.com>
+---
+--- a/src/drivers/driver_nl80211_event.c
++++ b/src/drivers/driver_nl80211_event.c
+@@ -2634,7 +2634,7 @@
+ }
+ 
+ 
+-static void nl80211_client_probe_event(struct wpa_driver_nl80211_data *drv,
++static void nl80211_client_probe_event(struct i802_bss *bss,
+ 				       struct nlattr **tb)
+ {
+ 	union wpa_event_data data;
+@@ -2655,7 +2655,7 @@
+ 
+ 	os_memset(&data, 0, sizeof(data));
+ 	os_memcpy(data.client_poll.addr, addr, ETH_ALEN);
+-	wpa_supplicant_event(drv->ctx, EVENT_DRIVER_CLIENT_POLL_OK, &data);
++	wpa_supplicant_event(bss->ctx, EVENT_DRIVER_CLIENT_POLL_OK, &data);
+ }
+ 
+ 
+@@ -5241,7 +5241,7 @@
+ 		nl80211_pmksa_candidate_event(drv, tb);
+ 		break;
+ 	case NL80211_CMD_PROBE_CLIENT:
+-		nl80211_client_probe_event(drv, tb);
++		nl80211_client_probe_event(bss, tb);
+ 		break;
+ 	case NL80211_CMD_TDLS_OPER:
+ 		nl80211_tdls_oper_event(drv, tb);
+--- a/src/ap/drv_callbacks.c
++++ b/src/ap/drv_callbacks.c
+@@ -2819,6 +2819,18 @@
+ 					data->eapol_tx_status.link_id);
+ 		break;
+ 	case EVENT_DRIVER_CLIENT_POLL_OK:
++#ifdef CONFIG_IEEE80211BE
++		if (hapd->conf->mld_ap &&
++		    !ap_get_sta(hapd, data->client_poll.addr)) {
++			struct hostapd_data *p_hapd;
++
++			p_hapd = hostapd_find_by_sta(hapd->iface,
++						     data->client_poll.addr,
++						     false, NULL);
++			if (p_hapd)
++				hapd = p_hapd;
++		}
++#endif /* CONFIG_IEEE80211BE */
+ 		hostapd_client_poll_ok(hapd, data->client_poll.addr);
+ 		break;
+ 	case EVENT_RX_FROM_UNKNOWN:
